@@ -32,10 +32,15 @@ def hash_sha256(buf):
 
 
 def hex_hash(hex_string):
+    if isinstance(hex_string, bytes):
+        hex_string = hex_string.decode("utf-8")
+
     return hash_sha256(bytearray.fromhex(hex_string))
 
-
 def hex_to_long(hex_string):
+    if isinstance(hex_string, bytes):
+        hex_string = hex_string.decode("utf-8")
+
     return int(hex_string, 16)
 
 
