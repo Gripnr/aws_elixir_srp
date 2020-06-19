@@ -52,6 +52,12 @@ defmodule AwsElixirSrp.HelpersTest do
     |> Python.call("source", "get_random", [nbytes])
   end
 
+  def py_pad_hex(py, bytes) do
+    py
+    |> Python.call("source", "pad_hex", [bytes])
+    |> to_string()
+  end
+
   property "hash_sha256/1 works" do
     py = start_python()
 
@@ -93,6 +99,14 @@ defmodule AwsElixirSrp.HelpersTest do
 
     forall bin <- non_empty(binary()) do
       Helpers.get_random(bin) >= py_get_random(py, bin)
+    end
+  end
+
+  property "pad_hex/1 works" do
+    py = start_python()
+
+    forall n <- pos_integer() do
+      Helpers.pad_hex(n) >= py_pad_hex(py, n)
     end
   end
 end

@@ -64,6 +64,9 @@ def pad_hex(long_int):
     :param {Long integer|String} long_int Number or string to pad.
     :return {String} Padded hex string.
     """
+    if isinstance(long_int, bytes):
+         long_int = long_int.decode("utf-8")
+
     if not isinstance(long_int, six.string_types):
         hash_str = long_to_hex(long_int)
     else:

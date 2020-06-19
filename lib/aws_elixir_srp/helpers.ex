@@ -50,8 +50,8 @@ defmodule AwsElixirSrp.Helpers do
           |> String.to_charlist()
           |> Enum.chunk_every(2)
           |> Enum.map(fn [a, b] ->
-            left = if(a >= 97, do: a - 87, else: a - 48)
-            right = if(b >= 97, do: b - 87, else: b - 48)
+            left = if(a >= ?a, do: a - ?a + 10, else: a - ?0)
+            right = if(b >= ?a, do: b - ?a + 10, else: b - ?0)
 
             left * 16 + right
           end)
@@ -106,16 +106,15 @@ defmodule AwsElixirSrp.Helpers do
   end
 
   def pad_hex(hex) when is_binary(hex) do
-    cond do
-      rem(String.length(hex), 2) == 1 ->
-        << 48 , hex :: binary >>
+    case hex do
+      hex when rem(byte_size(hex), 2) == 1 ->
+        <<?0, hex::binary>>
 
-      binary_part(hex, 0, 1) in '89ABCDEFabcdef' ->
-        << 48, 48 , hex :: binary >>
+      <<first::size(8), _rest::binary>> when first in [?8, ?9, ?a, ?b, ?c, ?d, ?e, ?f] ->
+        <<?0, ?0, hex::binary>>
 
-      true ->
+      hex ->
         hex
     end
   end
-
 end
