@@ -49,7 +49,12 @@ def long_to_hex(long_num):
 
 
 def get_random(nbytes):
-    random_hex = binascii.hexlify(os.urandom(nbytes))
+    if isinstance(nbytes, int):
+        binary = os.urandom(nbytes)
+    else:
+        binary = nbytes
+
+    random_hex = binascii.hexlify(binary)
     return hex_to_long(random_hex)
 
 

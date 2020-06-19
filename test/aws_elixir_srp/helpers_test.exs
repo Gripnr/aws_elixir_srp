@@ -47,6 +47,10 @@ defmodule AwsElixirSrp.HelpersTest do
     |> to_string()
   end
 
+  def py_get_random(py, nbytes) do
+    py
+    |> Python.call("source", "get_random", [nbytes])
+  end
 
   property "hash_sha256/1 works" do
     py = start_python()
@@ -72,11 +76,23 @@ defmodule AwsElixirSrp.HelpersTest do
     end
   end
 
-  property "long_to_hex/1 works" do
+  property "long_to_hex/1 wrorks" do
     py = start_python()
 
     forall n <- pos_integer() do
-       Helpers.long_to_hex(n)  == py_long_to_hex(py, n)
+      Helpers.long_to_hex(n) == py_long_to_hex(py, n)
+    end
+  end
+
+  property "get_random/1 works" do
+    forall n <- range(0, 100) do
+      Helpers.get_random(n) < floor(:math.pow(256, n))
+    end
+
+    py = start_python()
+
+    forall bin <- non_empty(binary()) do
+      Helpers.get_random(bin) >= py_get_random(py, bin)
     end
   end
 end

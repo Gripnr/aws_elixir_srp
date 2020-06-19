@@ -83,7 +83,39 @@ defmodule AwsElixirSrp.Helpers do
   def long_to_hex(long) do
     long
     |> Integer.to_charlist(16)
-    |> :binary.list_to_bin
+    |> :binary.list_to_bin()
     |> String.downcase()
   end
+
+  @spec get_random(pos_integer | binary) :: charlist
+  def get_random(n) when is_integer(n) do
+    n
+    |> :crypto.strong_rand_bytes()
+    |> get_random()
+  end
+
+  def get_random(bin) when is_binary(bin) do
+    :binary.decode_unsigned(bin)
+  end
+
+  @spec pad_hex(pos_integer | binary) :: charlist
+  def pad_hex(n) when is_integer(n) do
+    n
+    |> long_to_hex
+    |> pad_hex()
+  end
+
+  def pad_hex(hex) when is_binary(hex) do
+    cond do
+      rem(String.length(hex), 2) == 1 ->
+        << 48 , hex :: binary >>
+
+      binary_part(hex, 0, 1) in '89ABCDEFabcdef' ->
+        << 48, 48 , hex :: binary >>
+
+      true ->
+        hex
+    end
+  end
+
 end
