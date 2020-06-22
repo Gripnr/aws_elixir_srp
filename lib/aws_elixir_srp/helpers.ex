@@ -24,7 +24,7 @@ defmodule AwsElixirSrp.Helpers do
          )
 
   @g_hex 2
-  @info_bits to_charlist("Caldera Derived Key")
+  @info_bits "Caldera Derived Key"
 
   @spec hash_sha256(charlist) :: charlist
   def hash_sha256(buf) do
@@ -115,6 +115,26 @@ defmodule AwsElixirSrp.Helpers do
 
       hex ->
         hex
+    end
+  end
+
+  @spec compute_hkdf(binary, binary) :: binary
+  def compute_hkdf(ikm, salt) do
+    prk = :crypto.hmac(:sha256, salt, ikm)
+    info_bits_update = @info_bits <> <<1>>
+    hmac_hash = :crypto.hmac(:sha256, prk, info_bits_update)
+
+    binary_part(hmac_hash, 0, 16)
+  end
+
+  @spec calculate_u(pos_integer, pos_integer) :: {:ok, pos_integer} | :error
+  def calculate_u(big_a, big_b) do
+    case hex_hash(pad_hex(big_a) <> pad_hex(big_b)) do
+      {:ok, u_hex_hash} ->
+        hex_to_long(u_hex_hash)
+
+      error ->
+        error
     end
   end
 end

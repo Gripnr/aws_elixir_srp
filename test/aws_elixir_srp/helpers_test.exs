@@ -58,6 +58,17 @@ defmodule AwsElixirSrp.HelpersTest do
     |> to_string()
   end
 
+  def py_compute_hkdf(py, ikdf, salt) do
+    py
+    |> Python.call("source", "compute_hkdf", [ikdf, salt])
+    |> to_string()
+  end
+
+  def py_calculate_u(py, big_a, big_b) do
+    py
+    |> Python.call("source", "calculate_u", [big_a, big_b])
+  end
+
   property "hash_sha256/1 works" do
     py = start_python()
 
@@ -69,7 +80,7 @@ defmodule AwsElixirSrp.HelpersTest do
   property "hex_hash/1 works" do
     py = start_python()
 
-    forall hex <- non_empty(hex_gen) do
+    forall hex <- non_empty(hex_gen()) do
       Helpers.hex_hash(hex) == {:ok, py_hex_hash(py, hex)}
     end
   end
@@ -77,7 +88,7 @@ defmodule AwsElixirSrp.HelpersTest do
   property "hex_to_long/1 works" do
     py = start_python()
 
-    forall hex <- non_empty(hex_gen) do
+    forall hex <- non_empty(hex_gen()) do
       Helpers.hex_to_long(hex) == {:ok, py_hex_to_long(py, hex)}
     end
   end
@@ -107,6 +118,22 @@ defmodule AwsElixirSrp.HelpersTest do
 
     forall n <- pos_integer() do
       Helpers.pad_hex(n) >= py_pad_hex(py, n)
+    end
+  end
+
+  property "compute_hkdf/2 works" do
+    py = start_python()
+
+    forall [ikm <- binary(), salt <- binary()] do
+      Helpers.compute_hkdf(ikm, salt) == py_compute_hkdf(py, ikm, salt)
+    end
+  end
+
+  property "calculate_u/2 works" do
+    py = start_python()
+
+    forall [big_a <- pos_integer(), big_b <- pos_integer()] do
+      Helpers.calculate_u(big_a, big_b) == {:ok, py_calculate_u(py, big_a, big_b)}
     end
   end
 end
