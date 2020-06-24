@@ -181,6 +181,15 @@ class AWSSRP(object):
 
     @staticmethod
     def get_secret_hash(username, client_id, client_secret):
+        if isinstance(username, bytes):
+            username = username.decode("utf-8")
+
+        if isinstance(client_id, bytes):
+            client_id = client_id.decode("utf-8")
+
+        if isinstance(client_secret, bytes):
+            client_secret = client_secret.decode("utf-8")
+
         message = bytearray(username + client_id, 'utf-8')
         hmac_obj = hmac.new(bytearray(client_secret, 'utf-8'), message, hashlib.sha256)
         return base64.standard_b64encode(hmac_obj.digest()).decode('utf-8')

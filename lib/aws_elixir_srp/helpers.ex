@@ -137,4 +137,12 @@ defmodule AwsElixirSrp.Helpers do
         error
     end
   end
+
+  @spec get_secret_hash(charlist, charlist, charlist) :: charlist
+  def get_secret_hash(username, client_id, client_secret) do
+    message = username <> client_id
+    hmac_obj = :crypto.hmac(:sha256, client_secret, message)
+
+    Base.encode64(hmac_obj)
+  end
 end

@@ -24,6 +24,12 @@ defmodule AwsElixirSrp.HelpersTest do
     end
   end
 
+  def ascii_string() do
+    let bytes <- list(range(0, 127)) do
+      :binary.list_to_bin(bytes)
+    end
+  end
+
   def py_hash_sha256(py, buf) do
     py
     |> Python.call("source", "hash_sha256", [buf])
@@ -67,6 +73,12 @@ defmodule AwsElixirSrp.HelpersTest do
   def py_calculate_u(py, big_a, big_b) do
     py
     |> Python.call("source", "calculate_u", [big_a, big_b])
+  end
+
+  def py_get_secret_hash(py, username, client_id, client_secret) do
+    py
+    |> Python.call("source", "AWSSRP.get_secret_hash", [username, client_id, client_secret])
+    |> to_string()
   end
 
   property "hash_sha256/1 works" do
@@ -134,6 +146,19 @@ defmodule AwsElixirSrp.HelpersTest do
 
     forall [big_a <- pos_integer(), big_b <- pos_integer()] do
       Helpers.calculate_u(big_a, big_b) == {:ok, py_calculate_u(py, big_a, big_b)}
+    end
+  end
+
+  property "get_auth_params/2 works" do
+    py = start_python()
+
+    forall [
+      username <- ascii_string(),
+      client_id <- ascii_string(),
+      client_secret <- ascii_string()
+    ] do
+      Helpers.get_secret_hash(username, client_id, client_secret) ==
+        py_get_secret_hash(py, username, client_id, client_secret)
     end
   end
 end
