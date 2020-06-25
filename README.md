@@ -1,6 +1,6 @@
 # AwsElixirSrp
 
-**TODO: Add description**
+A quick implementation of AWS SRP for Elixir
 
 ## Installation
 

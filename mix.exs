@@ -20,6 +20,8 @@ defmodule AwsElixirSrp.MixProject do
   defp deps do
     [
       {:aws, "~> 0.5.0"},
+      {:timex, "~> 3.6.1"},
+      {:httpoison, "~> 1.6.2", override: true},
       {:export, "~> 0.1.0", only: [:test]},
       {:propcheck, "~> 1.1", only: [:test]}
     ]

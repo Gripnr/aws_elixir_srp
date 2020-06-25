@@ -81,6 +81,11 @@ defmodule AwsElixirSrp.HelpersTest do
     |> to_string()
   end
 
+  def py_pow_rem(py, n, p, r) do
+    py
+    |> Python.call("builtins", "pow", [n, p, r])
+  end
+
   property "hash_sha256/1 works" do
     py = start_python()
 
@@ -159,6 +164,18 @@ defmodule AwsElixirSrp.HelpersTest do
     ] do
       Helpers.get_secret_hash(username, client_id, client_secret) ==
         py_get_secret_hash(py, username, client_id, client_secret)
+    end
+  end
+
+  property "pow_rem/3 works" do
+    py = start_python()
+
+    forall [
+      n <- integer(),
+      p <- pos_integer(),
+      r <- pos_integer()
+    ] do
+      Helpers.pow_rem(n, p, r) == py_pow_rem(py, n, p, r)
     end
   end
 end
