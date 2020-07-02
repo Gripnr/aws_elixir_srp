@@ -192,7 +192,10 @@ defmodule AwsElixirSrp do
     end
   end
 
-  @spec authenticate_user(Client.t()) :: {:ok, charlist} | {:error, :response_invalid, nil | map}
+  @spec authenticate_user(Client.t()) ::
+          {:ok, charlist}
+          | {:error, :response_invalid, nil | map}
+          | {:error, :credentials_invalid, any}
   def authenticate_user(%Client{user_pool_id: user_pool_id, client_id: client_id} = client) do
     region = get_region(client)
     aws_client = %AWS.Client{region: region, secret_access_key: "", endpoint: "amazonaws.com"}
@@ -227,7 +230,8 @@ defmodule AwsElixirSrp do
            ) do
       {:ok, token_response}
     else
-      {:ok, response, _} -> {:error, :response_invalid, response}
+      {:error, error} -> {:error, :credentials_invalid, error}
+    {:ok, response, _} -> {:error, :response_invalid, response}
     end
   rescue
     MatchError -> {:error, :response_invalid, nil}
@@ -256,6 +260,7 @@ defmodule AwsElixirSrp do
            ) do
       {:ok, token_response}
     else
+      {:error, error} -> {:error, :credentials_invalid, error}
       {:ok, response, _} -> {:error, :response_invalid, response}
     end
   rescue
