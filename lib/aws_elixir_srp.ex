@@ -192,7 +192,7 @@ defmodule AwsElixirSrp do
     end
   end
 
-  @spec authenticate_user(Client.t()) :: {:ok, charlist} | {:error, any}
+  @spec authenticate_user(Client.t()) :: {:ok, charlist} | {:error, :response_invalid, nil | map}
   def authenticate_user(%Client{user_pool_id: user_pool_id, client_id: client_id} = client) do
     region = get_region(client)
     aws_client = %AWS.Client{region: region, secret_access_key: "", endpoint: "amazonaws.com"}
@@ -222,6 +222,35 @@ defmodule AwsElixirSrp do
                "ClientId" => client_id,
                "ChallengeName" => "PASSWORD_VERIFIER",
                "ChallengeResponses" => challenge_response
+             },
+             []
+           ) do
+      {:ok, token_response}
+    else
+      {:ok, response, _} -> {:error, :response_invalid, response}
+    end
+  rescue
+    MatchError -> {:error, :response_invalid, nil}
+  end
+
+  @spec refresh_token(Client.t(), charlist) ::
+          {:ok, charlist} | {:error, :response_invalid, map | nil}
+  def refresh_token(
+        %Client{user_pool_id: user_pool_id, client_id: client_id} = client,
+        refresh_token
+      ) do
+    region = get_region(client)
+    aws_client = %AWS.Client{region: region, secret_access_key: "", endpoint: "amazonaws.com"}
+
+    auth_params = get_auth_params(client)
+
+    with {:ok, token_response, %HTTPoison.Response{}} <-
+           AWS.Cognito.IdentityProvider.initiate_auth(
+             aws_client,
+             %{
+               "AuthFlow" => "REFRESH_TOKEN_AUTH",
+               "AuthParameters" => %{"REFRESH_TOKEN" => refresh_token},
+               "ClientId" => client_id
              },
              []
            ) do
