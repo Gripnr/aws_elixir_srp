@@ -194,8 +194,9 @@ defmodule AwsElixirSrp do
 
   @spec authenticate_user(Client.t()) ::
           {:ok, charlist}
-          | {:error, :response_invalid, nil | map}
           | {:error, :credentials_invalid, any}
+          | {:error, :response_error, any}
+          | {:error, :api_error, any}
   def authenticate_user(%Client{user_pool_id: user_pool_id, client_id: client_id} = client) do
     region = get_region(client)
     aws_client = %AWS.Client{region: region, secret_access_key: "", endpoint: "amazonaws.com"}
@@ -218,7 +219,7 @@ defmodule AwsElixirSrp do
              []
            ),
          challenge_response = process_challenge(client, challenge_parameters),
-         {:ok, token_response, %HTTPoison.Response{}} <-
+         {:ok, %{"AuthenticationResult" => authorization}, %HTTPoison.Response{}} <-
            AWS.Cognito.IdentityProvider.respond_to_auth_challenge(
              aws_client,
              %{
@@ -228,17 +229,27 @@ defmodule AwsElixirSrp do
              },
              []
            ) do
-      {:ok, token_response}
+      {:ok, authorization}
     else
-      {:error, error} -> {:error, :credentials_invalid, error}
-    {:ok, response, _} -> {:error, :response_invalid, response}
+      {:error, {"NotAuthorizedException", "Incorrect username or password."} = error} ->
+        {:error, :credentials_invalid, error}
+
+      {:error, %HTTPoison.Error{} = error} ->
+        {:error, :api_error, error}
+
+      {:ok, response, _} ->
+        {:error, :response_error, response}
+
+      error ->
+        {:error, :api_error, error}
     end
-  rescue
-    MatchError -> {:error, :response_invalid, nil}
   end
 
   @spec refresh_token(Client.t(), charlist) ::
-          {:ok, charlist} | {:error, :response_invalid, map | nil}
+          {:ok, map}
+          | {:error, :token_invalid, any}
+          | {:error, :response_error, any}
+          | {:error, :api_error, any}
   def refresh_token(
         %Client{user_pool_id: user_pool_id, client_id: client_id} = client,
         refresh_token
@@ -248,7 +259,7 @@ defmodule AwsElixirSrp do
 
     auth_params = get_auth_params(client)
 
-    with {:ok, token_response, %HTTPoison.Response{}} <-
+    with {:ok, %{"AuthenticationResult" => authorization}, %HTTPoison.Response{}} <-
            AWS.Cognito.IdentityProvider.initiate_auth(
              aws_client,
              %{
@@ -258,10 +269,12 @@ defmodule AwsElixirSrp do
              },
              []
            ) do
-      {:ok, token_response}
+      {:ok, authorization}
     else
-      {:error, error} -> {:error, :credentials_invalid, error}
-      {:ok, response, _} -> {:error, :response_invalid, response}
+      {:error, {_, _} = error} -> {:error, :token_invalid, error}
+      {:error, %HTTPoison.Error{} = error} -> {:error, :api_error, error}
+      {:ok, response, _} -> {:error, :response_error, response}
+      error -> {:error, :api_error, error}
     end
   rescue
     MatchError -> {:error, :response_invalid, nil}
