@@ -2,8 +2,6 @@ defmodule AwsElixirSrp do
   @moduledoc false
 
   alias AWS
-  alias HTTPoison
-
   alias AwsElixirSrp.{Client, Helpers}
 
   @n_hex Enum.join(
@@ -227,10 +225,10 @@ defmodule AwsElixirSrp do
            ) do
       {:ok, authorization}
     else
-      {:error, {"NotAuthorizedException", "Incorrect username or password."} = error} ->
+      {:error, %{status_code: 400} = error} ->
         {:error, :credentials_invalid, error}
 
-      {:error, %HTTPoison.Error{} = error} ->
+      {:error, error} ->
         {:error, :api_error, error}
 
       {:ok, response, _} ->
@@ -251,9 +249,9 @@ defmodule AwsElixirSrp do
         refresh_token
       ) do
     region = get_region(client)
-    aws_client = %AWS.Client{region: region, secret_access_key: "", endpoint: "amazonaws.com"}
+    aws_client = %AWS.Client{region: region, access_key_id: "", secret_access_key: ""}
 
-    with {:ok, %{"AuthenticationResult" => authorization}, %HTTPoison.Response{}} <-
+    with {:ok, %{"AuthenticationResult" => authorization}, %{}} <-
            AWS.CognitoIdentityProvider.initiate_auth(
              aws_client,
              %{
@@ -265,8 +263,8 @@ defmodule AwsElixirSrp do
            ) do
       {:ok, authorization}
     else
-      {:error, {_, _} = error} -> {:error, :token_invalid, error}
-      {:error, %HTTPoison.Error{} = error} -> {:error, :api_error, error}
+      {:error, {:unexpected_response, %{status_code: 400} = error}} -> {:error, :token_invalid, error}
+      {:error, error} -> {:error, :api_error, error}
       {:ok, response, _} -> {:error, :response_error, response}
       error -> {:error, :api_error, error}
     end

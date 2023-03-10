@@ -20,7 +20,7 @@ defmodule AwsElixirSrp.MixProject do
   defp deps do
     [
       {:aws, "~> 0.13.0"},
-      {:httpoison, "~> 2.0.0"},
+      {:hackney, "~> 1.18.1"},
       {:export, "~> 0.1.0", only: [:test]},
       {:propcheck, "~> 1.4.1", only: [:test]}
     ]
