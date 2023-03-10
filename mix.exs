@@ -5,7 +5,7 @@ defmodule AwsElixirSrp.MixProject do
     [
       app: :aws_elixir_srp,
       version: "0.1.0",
-      elixir: "~> 1.9",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -19,11 +19,11 @@ defmodule AwsElixirSrp.MixProject do
 
   defp deps do
     [
-      {:aws, "~> 0.5.0"},
-      {:timex, "~> 3.6.1"},
-      {:httpoison, "~> 1.6.2", override: true},
+      {:aws, "~> 0.13.0"},
+      {:timex, "~> 3.7.9"},
+      {:httpoison, "~> 2.0.0"},
       {:export, "~> 0.1.0", only: [:test]},
-      {:propcheck, "~> 1.1", only: [:test]}
+      {:propcheck, "~> 1.4.1", only: [:test]}
     ]
   end
 end

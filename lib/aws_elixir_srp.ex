@@ -144,7 +144,7 @@ defmodule AwsElixirSrp do
   @spec process_challenge(Client.t(), map) :: map
   def process_challenge(
         %Client{
-          username: username,
+          username: _username,
           password: password,
           client_id: client_id,
           client_secret: client_secret
@@ -159,9 +159,7 @@ defmodule AwsElixirSrp do
       "USER_ID_FOR_SRP" => user_id_for_srp
     } = params
 
-    timestamp =
-      "Thu Jun 25 03:46:51 UTC 2020" ||
-        TimexFormat.format!(Timex.now(), "%a %b %d %H:%M:%S UTC %Y")
+    timestamp = TimexFormat.format!(Timex.now(), "%a %b %d %H:%M:%S UTC %Y")
 
     {:ok, srp_b} = Helpers.hex_to_long(srp_b_hex)
     hkdf = get_password_authentication_key(client, user_id_for_srp, password, srp_b, salt_hex)
@@ -170,7 +168,7 @@ defmodule AwsElixirSrp do
 
     msg = "#{get_pool_id(client)}#{user_id_for_srp}#{secret_block_bytes}#{timestamp}"
 
-    hmac_obj = :crypto.hmac(:sha256, hkdf, msg)
+    hmac_obj = :crypto.mac(:hmac, :sha256, hkdf, msg)
 
     signature_string = Base.encode64(hmac_obj)
 
@@ -197,9 +195,9 @@ defmodule AwsElixirSrp do
           | {:error, :credentials_invalid, any}
           | {:error, :response_error, any}
           | {:error, :api_error, any}
-  def authenticate_user(%Client{user_pool_id: user_pool_id, client_id: client_id} = client) do
+  def authenticate_user(%Client{client_id: client_id} = client) do
     region = get_region(client)
-    aws_client = %AWS.Client{region: region, secret_access_key: "", endpoint: "amazonaws.com"}
+    aws_client = %AWS.Client{region: region, access_key_id: "", secret_access_key: ""}
 
     auth_params = get_auth_params(client)
 
@@ -208,8 +206,8 @@ defmodule AwsElixirSrp do
             "ChallengeName" => "PASSWORD_VERIFIER",
             "ChallengeParameters" => challenge_parameters
           },
-          %HTTPoison.Response{}} <-
-           AWS.Cognito.IdentityProvider.initiate_auth(
+          %{}} <-
+           AWS.CognitoIdentityProvider.initiate_auth(
              aws_client,
              %{
                "AuthFlow" => "USER_SRP_AUTH",
@@ -219,8 +217,8 @@ defmodule AwsElixirSrp do
              []
            ),
          challenge_response = process_challenge(client, challenge_parameters),
-         {:ok, %{"AuthenticationResult" => authorization}, %HTTPoison.Response{}} <-
-           AWS.Cognito.IdentityProvider.respond_to_auth_challenge(
+         {:ok, %{"AuthenticationResult" => authorization}, %{}} <-
+           AWS.CognitoIdentityProvider.respond_to_auth_challenge(
              aws_client,
              %{
                "ClientId" => client_id,
@@ -251,16 +249,14 @@ defmodule AwsElixirSrp do
           | {:error, :response_error, any}
           | {:error, :api_error, any}
   def refresh_token(
-        %Client{user_pool_id: user_pool_id, client_id: client_id} = client,
+        %Client{client_id: client_id} = client,
         refresh_token
       ) do
     region = get_region(client)
     aws_client = %AWS.Client{region: region, secret_access_key: "", endpoint: "amazonaws.com"}
 
-    auth_params = get_auth_params(client)
-
     with {:ok, %{"AuthenticationResult" => authorization}, %HTTPoison.Response{}} <-
-           AWS.Cognito.IdentityProvider.initiate_auth(
+           AWS.CognitoIdentityProvider.initiate_auth(
              aws_client,
              %{
                "AuthFlow" => "REFRESH_TOKEN_AUTH",

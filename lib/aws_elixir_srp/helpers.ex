@@ -108,9 +108,9 @@ defmodule AwsElixirSrp.Helpers do
 
   @spec compute_hkdf(binary, binary) :: binary
   def compute_hkdf(ikm, salt) do
-    prk = :crypto.hmac(:sha256, salt, ikm)
+    prk = :crypto.mac(:hmac, :sha256, salt, ikm)
     info_bits_update = @info_bits <> <<1>>
-    hmac_hash = :crypto.hmac(:sha256, prk, info_bits_update)
+    hmac_hash = :crypto.mac(:hmac, :sha256, prk, info_bits_update)
 
     binary_part(hmac_hash, 0, 16)
   end
@@ -129,7 +129,7 @@ defmodule AwsElixirSrp.Helpers do
   @spec get_secret_hash(charlist, charlist, charlist) :: charlist
   def get_secret_hash(username, client_id, client_secret) do
     message = username <> client_id
-    hmac_obj = :crypto.hmac(:sha256, client_secret, message)
+    hmac_obj = :crypto.mac(:hmac, :sha256, client_secret, message)
 
     Base.encode64(hmac_obj)
   end
