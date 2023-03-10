@@ -3,8 +3,6 @@ defmodule AwsElixirSrp do
 
   alias AWS
   alias HTTPoison
-  alias Timex
-  alias Timex.Format.DateTime.Formatters.Strftime, as: TimexFormat
 
   alias AwsElixirSrp.{Client, Helpers}
 
@@ -159,7 +157,7 @@ defmodule AwsElixirSrp do
       "USER_ID_FOR_SRP" => user_id_for_srp
     } = params
 
-    timestamp = TimexFormat.format!(Timex.now(), "%a %b %d %H:%M:%S UTC %Y")
+    timestamp = Calendar.strftime(DateTime.utc_now(), "%a %b %d %H:%M:%S UTC %Y")
 
     {:ok, srp_b} = Helpers.hex_to_long(srp_b_hex)
     hkdf = get_password_authentication_key(client, user_id_for_srp, password, srp_b, salt_hex)
