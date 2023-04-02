@@ -22,7 +22,8 @@ defmodule AwsElixirSrp.MixProject do
       {:aws, "~> 0.13.0"},
       {:hackney, "~> 1.18.1"},
       {:export, "~> 0.1.0", only: [:test]},
-      {:propcheck, "~> 1.4.1", only: [:test]}
+      {:propcheck, "~> 1.4.1", only: [:test]},
+      {:timex, "~> 3.7.11"}
     ]
   end
 end

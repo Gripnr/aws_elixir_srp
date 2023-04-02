@@ -155,7 +155,7 @@ defmodule AwsElixirSrp do
       "USER_ID_FOR_SRP" => user_id_for_srp
     } = params
 
-    timestamp = Calendar.strftime(DateTime.utc_now(), "%a %b %d %H:%M:%S UTC %Y")
+    timestamp = Timex.format!(DateTime.utc_now(), "{WDshort} {Mshort} {D} {h24}:{m}:{s} {Zabbr} {YYYY}")
 
     {:ok, srp_b} = Helpers.hex_to_long(srp_b_hex)
     hkdf = get_password_authentication_key(client, user_id_for_srp, password, srp_b, salt_hex)
